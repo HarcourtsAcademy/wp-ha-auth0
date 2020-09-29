@@ -28,17 +28,26 @@
  *
  * @return WP_User|null
  */
-function ha_auth0_hook_auth0_get_wp_user( ?WP_User $user, stdClass $userinfo ) {
-    $found_user = get_user_by( 'login', $userinfo->{'https://one.harcourts.com/harcourts_one_username'} );
-    if (! empty($found_user) && strpos($userinfo->email, '@temp.harcourts.net') !== false ) {
-        /**
-         * Temporarily set the WP user's email to match the Auth0 email
-         * to avoid their correct email address being overwritten with
-         * a tempory email used in Auth0.
-         */
-        $found_user->data->user_email = $userinfo->email;
+function ha_auth0_hook_auth0_get_wp_user( ?WP_User $user, stdClass $a0userinfo ) {
+    $found_wpuser = get_user_by( 'login', $a0userinfo->username );
+    if (! empty($found_wpuser) ) {
+        if (strpos($a0userinfo->email, '@temp.harcourts.net') !== false) {
+            /**
+             * Auth0 email address is a temporary email address so
+             * temporarily set the WP user's email to match the Auth0 email
+             * to avoid their correct email address being overwritten with
+             * a temporary email used in Auth0.
+             */
+            $found_wpuser->data->user_email = $a0userinfo->email;
+        } else {
+            /**
+             * Auth0 email address is not a temporary email address so
+             * update the WP user's email to match the Auth0 email.
+             */
+
+        }
     }
-    $user = $found_user instanceof WP_User ? $found_user : null;
+    $user = $found_wpuser instanceof WP_User ? $found_wpuser : null;
     return $user;
 }
 add_filter( 'auth0_get_wp_user', 'ha_auth0_hook_auth0_get_wp_user', 1, 2 );
